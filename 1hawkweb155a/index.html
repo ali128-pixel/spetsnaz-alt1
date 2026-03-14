@@ -1,0 +1,263 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Hawk Pictures</title>
+
+<style>
+body{
+margin:0;
+background:#0e0e18;
+font-family:"Comic Sans MS", cursive;
+color:white;
+overflow:hidden;
+}
+
+header{
+text-align:center;
+font-size:26px;
+padding:6px;
+background:linear-gradient(90deg,#ffcc00,#ff5500,#ffcc00);
+color:black;
+letter-spacing:2px;
+text-shadow:2px 2px #fff;
+}
+
+#viewer{
+position:absolute;
+top:68px;
+bottom:70px;
+left:0;
+right:0;
+overflow:hidden;
+cursor:grab;
+background:radial-gradient(circle,#222 0%,#000 80%);
+}
+
+#img{
+position:absolute;
+top:50%;
+left:50%;
+transform-origin:center;
+max-width:none;
+max-height:none;
+user-select:none;
+pointer-events:none;
+}
+
+#controls{
+position:absolute;
+bottom:0;
+left:0;
+right:0;
+height:70px;
+background:#111;
+border-top:3px solid #ffcc00;
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+align-items:center;
+gap:6px;
+padding:4px;
+font-size:13px;
+}
+
+button{
+background:#ffcc00;
+border:none;
+padding:4px 8px;
+font-size:13px;
+cursor:pointer;
+border-radius:5px;
+box-shadow:2px 2px #000;
+}
+
+button:hover{
+background:#ff8800;
+}
+
+.slider{
+display:flex;
+align-items:center;
+gap:4px;
+}
+
+input[type=range]{
+width:90px;
+}
+
+#counter{
+position:absolute;
+top:42px;
+right:10px;
+background:#0008;
+padding:3px 7px;
+border-radius:6px;
+font-size:12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>HAWK PICTURES</header>
+
+<div id="viewer">
+<img id="img">
+</div>
+
+<div id="counter"></div>
+
+<div id="controls">
+
+<button onclick="prev()">◀</button>
+<button onclick="next()">▶</button>
+
+<button onclick="rotate(-90)">⟲</button>
+<button onclick="rotate(90)">⟳</button>
+
+<button onclick="resetView()">Reset</button>
+<button onclick="fullscreen()">Fullscreen</button>
+
+<div class="slider">
+B
+<input id="bright" type="range" min="0" max="200" value="100">
+</div>
+
+<div class="slider">
+C
+<input id="contrast" type="range" min="0" max="200" value="100">
+</div>
+
+</div>
+
+<script>
+
+const images=[
+"1hawk001.jpg",
+"1hawk002.jpg",
+"1hawk003.jpg",
+"1hawk004.jpg",
+"1hawk005.jpg",
+"1hawk006.jpg",
+"1hawk007.jpg"
+];
+
+let index=0;
+
+const img=document.getElementById("img");
+const viewer=document.getElementById("viewer");
+const counter=document.getElementById("counter");
+
+let scale=1;
+let rotation=0;
+let posX=0;
+let posY=0;
+
+let dragging=false;
+let startX,startY;
+
+function load(){
+img.onload=fitImage;
+img.src=images[index];
+counter.textContent=(index+1)+" / "+images.length;
+}
+
+function fitImage(){
+
+const vw=viewer.clientWidth;
+const vh=viewer.clientHeight;
+
+const iw=img.naturalWidth;
+const ih=img.naturalHeight;
+
+scale=Math.min(vw/iw,vh/ih);
+
+posX=0;
+posY=0;
+rotation=0;
+
+update();
+}
+
+function update(){
+img.style.transform=
+`translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px))
+ scale(${scale})
+ rotate(${rotation}deg)`;
+
+img.style.filter=
+`brightness(${bright.value}%)
+ contrast(${contrast.value}%)`;
+}
+
+function next(){
+index=(index+1)%images.length;
+load();
+}
+
+function prev(){
+index=(index-1+images.length)%images.length;
+load();
+}
+
+function rotate(d){
+rotation+=d;
+update();
+}
+
+function resetView(){
+bright.value=100;
+contrast.value=100;
+fitImage();
+}
+
+function fullscreen(){
+if(!document.fullscreenElement)
+document.documentElement.requestFullscreen();
+else
+document.exitFullscreen();
+}
+
+viewer.addEventListener("mousedown",e=>{
+dragging=true;
+viewer.style.cursor="grabbing";
+startX=e.clientX-posX;
+startY=e.clientY-posY;
+});
+
+window.addEventListener("mouseup",()=>{
+dragging=false;
+viewer.style.cursor="grab";
+});
+
+window.addEventListener("mousemove",e=>{
+if(!dragging)return;
+posX=e.clientX-startX;
+posY=e.clientY-startY;
+update();
+});
+
+viewer.addEventListener("wheel",e=>{
+e.preventDefault();
+scale+=e.deltaY*-0.001;
+scale=Math.min(Math.max(.05,scale),20);
+update();
+});
+
+bright.oninput=update;
+contrast.oninput=update;
+
+window.addEventListener("keydown",e=>{
+if(e.key==="ArrowRight")next();
+if(e.key==="ArrowLeft")prev();
+});
+
+load();
+
+</script>
+
+</body>
+</html>
+```

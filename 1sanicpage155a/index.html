@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sanic Fighters</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    background: radial-gradient(circle at top, #0a1f44, #000814);
+    font-family: Arial, Helvetica, sans-serif;
+    color:white;
+    overflow-x:hidden;
+}
+
+h1{
+    text-align:center;
+    padding:20px;
+    font-size:3em;
+    letter-spacing:4px;
+    text-shadow:0 0 15px cyan;
+}
+
+.gallery{
+    display:grid;
+    grid-template-columns: repeat(auto-fill,minmax(140px,1fr));
+    gap:8px;
+    padding:10px;
+}
+
+.gallery img{
+    width:100%;
+    height:140px;
+    object-fit:cover;
+    cursor:pointer;
+    border-radius:8px;
+    transition:0.3s;
+}
+
+.gallery img:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 15px cyan;
+}
+
+/* Viewer */
+.viewer{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.95);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    z-index:999;
+}
+
+.viewer img{
+    max-width:90%;
+    max-height:80%;
+    cursor:grab;
+    transition:transform 0.1s;
+}
+
+.controls{
+    margin-top:15px;
+}
+
+button{
+    background:#00cfff;
+    border:none;
+    padding:10px 20px;
+    margin:5px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#00ffff;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚡ SANIC FIGHTERS ⚡</h1>
+
+<div class="gallery" id="gallery"></div>
+
+<div class="viewer" id="viewer">
+    <img id="viewImg">
+    <div class="controls">
+        <button onclick="prevImage()">◀ Prev</button>
+        <button onclick="nextImage()">Next ▶</button>
+        <button onclick="closeViewer()">Close</button>
+    </div>
+</div>
+
+<script>
+const images = [
+"satam001.jpg","satam002.jpg","satam003.jpg","satam004.jpg","satam005.jpg","satam006.jpg","satam007.jpg","satam008.jpg","satam009.jpg","satam010.jpg",
+"satam011.jpg","satam012.jpg","satam013.jpg","satam014.jpg","satam015.jpg","satam016.jpg","satam017.jpg","satam018.jpg","satam019.jpg","satam020.jpg",
+"satam021.jpg","satam022.jpg","satam023.jpg","satam024.jpg","satam025.jpg","satam026.jpg","satam027.jpg","satam028.jpg","satam029.jpg","satam030.jpg",
+"satam031.jpg","satam032.jpg","satam033.jpg","satam034.jpg","satam035.jpg","satam036.jpg","satam037.jpg","satam038.jpg","satam039.jpg","satam040.jpg",
+"satam041.jpg","satam042.jpg","satam043.jpg","satam044.jpg","satam045.jpg","satam046.jpg","satam047.jpg","satam048.jpg","satam049.jpg","satam050.jpg",
+"satam051.jpg","satam052.jpg","satam053.jpg","satam054.jpg","satam055.jpg","satam056.jpg","satam057.jpg","satam058.jpg","satam059.jpg","satam060.jpg",
+"satam061.jpg","satam062.jpg","satam063.jpg","satam064.jpg","satam065.jpg","satam066.jpg","satam067.jpg","satam068.jpg","satam069.jpg","satam070.jpg",
+"satam071.jpg","satam072.jpg","satam073.jpg","satam074.jpg","satam075.jpg","satam076.jpg","satam077.jpg","satam078.jpg","satam079.jpg","satam080.jpg",
+"satam081.jpg","satam082.jpg","satam083.jpg","satam084.jpg","satam085.jpg","satam086.jpg","satam087.jpg","satam088.jpg","satam089.jpg","satam090.jpg",
+"satam091.jpg","satam092.jpg","satam093.jpg","satam094.jpg","satam095.jpg","satam096.jpg","satam097.jpg","satam098.jpg","satam099.jpg","satam100.jpg",
+"satam101.jpg","satam102.jpg","satam103.jpg","satam104.jpg","satam105.jpg","satam106.jpg","satam107.jpg","satam108.jpg","satam109.jpg","satam110.jpg",
+"satam111.jpg","satam112.jpg","satam113.jpg","satam114.jpg","satam115.jpg","satam116.jpg","satam117.jpg","satam118.jpg","satam119.jpg","satam120.jpg",
+"satam121.jpg","satam122.jpg","satam123.jpg","satam124.jpg","satam125.jpg","satam126.jpg","satam127.jpg","satam128.jpg","satam129.jpg","satam130.jpg",
+"satam131.jpg","satam132.jpg","satam133.jpg","satam134.jpg","satam135.jpg","satam136.jpg","satam137.jpg","satam138.jpg","satam139.jpg","satam140.jpg",
+"satam141.jpg","satam142.jpg","satam143.jpg","satam144.jpg","satam145.jpg","satam146.jpg","satam147.jpg","satam148.jpg","satam149.jpg","satam150.jpg",
+"satam151.jpg","satam152.jpg","satam153.jpg","satam154.jpg","satam155.jpg","satam156.jpg","satam157.jpg","satam158.jpg","satam159.jpg","satam160.jpg",
+"satam161.jpg","satam162.jpg","satam163.jpg","satam164.jpg","satam165.jpg","satam166.jpg","satam167.jpg","satam168.jpg","satam169.jpg","satam170.jpg",
+"satam171.jpg","satam172.jpg","satam173.jpg","satam174.jpg","satam175.jpg","satam176.jpg","satam177.jpg","satam178.jpg","satam179.jpg","satam180.jpg",
+"satam181.jpg","satam182.jpg","satam183.jpg","satam184.jpg","satam185.jpg","satam186.jpg","satam187.jpg","satam188.jpg","satam189.jpg","satam190.jpg",
+"satam191.jpg","satam192.jpg","satam193.jpg","satam194.jpg","satam195.jpg","satam196.jpg","satam197.jpg","satam198.jpg","satam199.jpg","satam200.jpg",
+"satam201.jpg","satam202.jpg","satam203.jpg","satam204.jpg","satam205.jpg","satam206.jpg","satam207.jpg","satam208.jpg","satam209.jpg","satam210.jpg",
+"satam211.jpg","satam212.jpg","satam213.jpg","satam214.jpg","satam215.jpg","satam216.jpg","satam217.jpg","satam218.jpg","satam219.jpg","satam220.jpg",
+"satam221.jpg","satam222.jpg","satam223.jpg","satam224.jpg","satam225.jpg","satam226.jpg","satam227.jpg","satam228.jpg"
+];
+
+const gallery = document.getElementById("gallery");
+const viewer = document.getElementById("viewer");
+const viewImg = document.getElementById("viewImg");
+
+let current = 0;
+let scale = 1, posX = 0, posY = 0, isDragging = false, startX, startY;
+
+images.forEach((src,i)=>{
+    const img=document.createElement("img");
+    img.src=src;
+    img.onclick=()=>openViewer(i);
+    gallery.appendChild(img);
+});
+
+function openViewer(i){
+    current=i;
+    viewImg.src=images[current];
+    viewer.style.display="flex";
+    resetTransform();
+}
+
+function closeViewer(){
+    viewer.style.display="none";
+}
+
+function nextImage(){
+    current=(current+1)%images.length;
+    openViewer(current);
+}
+
+function prevImage(){
+    current=(current-1+images.length)%images.length;
+    openViewer(current);
+}
+
+function resetTransform(){
+    scale=1; posX=0; posY=0;
+    updateTransform();
+}
+
+function updateTransform(){
+    viewImg.style.transform=`translate(${posX}px,${posY}px) scale(${scale})`;
+}
+
+viewImg.onwheel=(e)=>{
+    e.preventDefault();
+    scale+=e.deltaY*-0.001;
+    scale=Math.min(Math.max(.5,scale),5);
+    updateTransform();
+};
+
+viewImg.onmousedown=(e)=>{
+    isDragging=true;
+    startX=e.clientX-posX;
+    startY=e.clientY-posY;
+    viewImg.style.cursor="grabbing";
+};
+
+window.onmouseup=()=>{
+    isDragging=false;
+    viewImg.style.cursor="grab";
+};
+
+window.onmousemove=(e)=>{
+    if(!isDragging)return;
+    posX=e.clientX-startX;
+    posY=e.clientY-startY;
+    updateTransform();
+};
+
+window.onkeydown=(e)=>{
+    if(e.key==="ArrowRight")nextImage();
+    if(e.key==="ArrowLeft")prevImage();
+    if(e.key==="Escape")closeViewer();
+};
+</script>
+
+</body>
+</html>

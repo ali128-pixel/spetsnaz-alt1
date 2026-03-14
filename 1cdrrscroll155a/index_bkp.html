@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Block Map Viewer - Stretched 15x5</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:#111;
+  font-family:sans-serif;
+  cursor:none;
+}
+
+#viewer{
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  position:relative;
+}
+
+#map{
+  position:absolute;
+  top:0;
+  left:0;
+  image-rendering:pixelated;
+  width:1500vw;
+  height:500vh;
+}
+
+/* controls */
+.controls{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:grid;
+  grid-template-columns:70px 70px 70px;
+  grid-template-rows:70px 70px 70px;
+  gap:6px;
+  z-index:1002;
+}
+
+.controls button{
+  font-size:28px;
+  border:none;
+  border-radius:10px;
+  background:#333;
+  color:white;
+  cursor:pointer;
+}
+
+.controls button:hover{background:#555;}
+
+#up{grid-column:2;grid-row:1;}
+#left{grid-column:1;grid-row:2;}
+#right{grid-column:3;grid-row:2;}
+#down{grid-column:2;grid-row:3;}
+
+.info{
+  position:fixed;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#0008;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:14px;
+  z-index:1002;
+}
+
+/* borders */
+.border{
+  position:fixed;
+  background:black;
+  z-index:1001;
+}
+
+#borderTop{top:0;left:0;width:100vw;height:5vh;}
+#borderBottom{bottom:0;left:0;width:100vw;height:5vh;}
+#borderLeft{top:0;left:0;width:5vw;height:100vh;}
+#borderRight{top:0;right:0;width:5vw;height:100vh;}
+
+/* custom cursor */
+#cursor{
+  position:fixed;
+  width:5vw; /* twice smaller */
+  height:auto;
+  pointer-events:none;
+  z-index:2000;
+  transform-origin:center center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="viewer">
+<img id="map" src="1map1a.webp">
+</div>
+
+<div id="borderTop" class="border"></div>
+<div id="borderBottom" class="border"></div>
+<div id="borderLeft" class="border"></div>
+<div id="borderRight" class="border"></div>
+
+<div class="info">1 Block = Fullscreen (Stretched 15×5)</div>
+
+<div class="controls">
+<button id="up">▲</button>
+<button id="left">◀</button>
+<button id="right">▶</button>
+<button id="down">▼</button>
+</div>
+
+<img id="cursor" src="1chip1a.png">
+
+<script>
+const blocksX=15;
+const blocksY=5;
+
+let map=document.getElementById("map");
+let camX=0;
+let camY=0;
+
+const blocked=[
+[2,2],[2,3],[2,4],[2,5],[2,6],[2,7],[2,9],[2,10],[2,11],[2,12],[2,13],[2,14],[2,15],
+[3,15],[3,14],[3,13],[3,12],[3,11],[3,10],[3,9],[3,8],[3,7],
+[4,1],[4,2],[4,3],[4,4],[4,5],[4,7],[4,8],[4,9],[4,10],[4,11],[4,12],[4,13],[4,14],[4,15],
+[5,15],[5,14],[5,13],[5,12],[5,11],[5,10],[5,9],[5,8],[5,7]
+];
+
+function isBlocked(x,y){
+return blocked.some(b=>b[0]===y+1&&b[1]===x+1);
+}
+
+function updateCamera(){
+let vw=window.innerWidth;
+let vh=window.innerHeight;
+map.style.left=-(camX*vw)+"px";
+map.style.top=-(camY*vh)+"px";
+}
+
+function move(dx,dy){
+let nx=camX+dx;
+let ny=camY+dy;
+
+if(nx<0||ny<0||nx>blocksX-1||ny>blocksY-1)return;
+if(isBlocked(nx,ny))return;
+
+camX=nx;
+camY=ny;
+updateCamera();
+}
+
+document.getElementById("left").onclick=()=>move(-1,0);
+document.getElementById("right").onclick=()=>move(1,0);
+document.getElementById("up").onclick=()=>move(0,-1);
+document.getElementById("down").onclick=()=>move(0,1);
+
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowLeft")move(-1,0);
+if(e.key==="ArrowRight")move(1,0);
+if(e.key==="ArrowUp")move(0,-1);
+if(e.key==="ArrowDown")move(0,1);
+});
+
+/* drag camera */
+let startX=0,startY=0;
+let dragging=false;
+
+viewer.addEventListener("mousedown",e=>{
+dragging=true;
+startX=e.clientX;
+startY=e.clientY;
+});
+
+document.addEventListener("mouseup",()=>dragging=false);
+
+/* cursor inertia system */
+
+const cursor=document.getElementById("cursor");
+
+let mouseX=0,mouseY=0;
+let curX=0,curY=0;
+
+let angle=0;
+let targetAngle=0;
+
+document.addEventListener("mousemove",e=>{
+mouseX=e.clientX;
+mouseY=e.clientY;
+
+if(dragging){
+let dx=e.clientX-startX;
+let dy=e.clientY-startY;
+let vw=window.innerWidth;
+let vh=window.innerHeight;
+
+if(Math.abs(dx)>vw/2){
+move(dx>0?-1:1,0);
+startX=e.clientX;
+}
+if(Math.abs(dy)>vh/2){
+move(0,dy>0?-1:1);
+startY=e.clientY;
+}
+}
+});
+
+/* animation loop */
+
+function animate(){
+
+/* position inertia */
+curX += (mouseX-curX)*0.15;
+curY += (mouseY-curY)*0.15;
+
+/* direction angle */
+let dx = mouseX-curX;
+let dy = mouseY-curY;
+
+if(Math.abs(dx)+Math.abs(dy)>0.1){
+targetAngle = Math.atan2(dy,dx)*180/Math.PI;
+}
+
+/* rotation inertia */
+angle += (targetAngle-angle)*0.1;
+
+cursor.style.left=curX+"px";
+cursor.style.top=curY+"px";
+
+cursor.style.transform=
+"translate(-50%,-50%) rotate("+angle+"deg)";
+
+requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>
